@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,7 +12,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT ?? 3000);
 
 app.use(express.json());
 
@@ -209,7 +209,7 @@ All descriptions, changes overview, and suggestions MUST be written in "${langua
                 properties: {
                   text: { type: Type.STRING, description: "The beautiful rephrased content." },
                   tone: { type: Type.STRING, description: "Exact tone name: 'Regular / Natural', 'Formal / Business', 'Casual / Warm', 'Concise / Bulletproof', or 'Creative / Vivid'" },
-                  description: { type: Type.STRING, description: "A very clear, human suggestion on when to use this, written entirely in the target language (e.g. 'Parfait pour envoyer à vos collègues' if selected language is French)." },
+                  description: { type: Type.STRING, description: "A very clear, human suggestion on when to use this, written entirely in the target language (e.g. 'Parfait pour envoyer Ã  vos collÃ¨gues' if selected language is French)." },
                   changesOverview: { type: Type.STRING, description: "What key change was made, in 2-5 words, written entirely in the target language (e.g. 'Vocabulaire soutenu' if selected language is French)." }
                 },
                 required: ["text", "tone", "description"]
