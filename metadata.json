@@ -1,0 +1,6 @@
+{
+  "name": "Grammar & Rephrase",
+  "description": "An advanced Grammar Checker & Rephraser app in the style of Reverso, powered by Gemini. Supports multiple languages, rich hover explanations for corrections (diff style), and multiple custom rephrasing modes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
