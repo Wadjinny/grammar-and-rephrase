@@ -4,3 +4,5 @@ overrides:
   electron-to-chromium: 1.5.389
 onlyBuiltDependencies:
   - esbuild
+allowBuilds:
+  esbuild: true
