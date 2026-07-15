@@ -1,0 +1,9 @@
+services:
+  backend:
+    image: ghcr.io/wadjinny/grammar-and-rephrase/backend:${IMAGE_TAG:-latest}
+    ports:
+      - "3000:3000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    restart: unless-stopped
+    mem_limit: 256m
