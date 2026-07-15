@@ -13,7 +13,7 @@ interface DiffHighlightProps {
   language: string;
 }
 
-export default function DiffHighlight({ segments, language }: DiffHighlightProps) {
+export default function DiffHighlight({ segments }: DiffHighlightProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   if (!segments || segments.length === 0) {

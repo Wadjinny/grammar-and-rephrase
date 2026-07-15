@@ -11,22 +11,15 @@ import {
   Check, 
   RefreshCw, 
   ArrowRight, 
-  Trash2, 
   Volume2, 
-  Bookmark, 
   HelpCircle, 
   TrendingUp, 
-  FileText, 
-  MessageSquare, 
   AlertCircle,
-  Settings,
   Info,
   Cpu
 } from "lucide-react";
 import { SUPPORTED_LANGUAGES } from "./languages";
 import type {
-  DiffSegment,
-  GrammarExplanation,
   GrammarCheckResponse,
   RephraseAlternative,
   SavedItem,

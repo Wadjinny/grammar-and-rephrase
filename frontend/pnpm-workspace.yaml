@@ -2,3 +2,5 @@ minimumReleaseAge: 1440
 overrides:
   autoprefixer: 10.5.2
   electron-to-chromium: 1.5.389
+onlyBuiltDependencies:
+  - esbuild

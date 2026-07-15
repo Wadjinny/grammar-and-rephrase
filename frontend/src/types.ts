@@ -3,12 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export enum DiffSegmentType {
-  UNMODIFIED = "unmodified",
-  DELETED = "deleted",
-  INSERTED = "inserted",
-}
-
 export interface DiffSegment {
   type: "unmodified" | "deleted" | "inserted";
   text: string;
