@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@theme {
+  /* Soft & Rounded design tokens */
+  --color-canvas: #f6f7f9;
+
+  --shadow-card: 0 4px 16px rgba(17, 24, 39, 0.05);
+  --shadow-hover: 0 8px 24px rgba(17, 24, 39, 0.09);
+  --shadow-pop: 0 12px 32px rgba(79, 70, 229, 0.22);
+
+  --radius-card: 20px;
+  --radius-ctrl: 14px;
+
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Inter", sans-serif;
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  font-family: var(--font-sans);
+}
