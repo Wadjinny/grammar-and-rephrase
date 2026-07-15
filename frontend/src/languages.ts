@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Language } from "./types";
+import type { Language } from "./types";
 
 export const SUPPORTED_LANGUAGES: Language[] = [
   {

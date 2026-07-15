@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { DiffSegment } from "../types";
+import type { DiffSegment } from "../types";
 import { Info, HelpCircle, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 

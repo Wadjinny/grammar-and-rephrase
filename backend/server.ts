@@ -4,8 +4,6 @@
  */
 
 import express from "express";
-import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
@@ -229,27 +227,6 @@ All descriptions, changes overview, and suggestions MUST be written in "${langua
   }
 });
 
-// Start integration with Vite in development
-async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    // Mount Vite dev server middlewares to serve client files
-    app.use(vite.middlewares);
-  } else {
-    // Serve production static assets safely from web server
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Express server successfully running on port ${PORT}`);
-  });
-}
-
-startServer();
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`API server successfully running on port ${PORT}`);
+});

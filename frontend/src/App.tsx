@@ -24,13 +24,13 @@ import {
   Cpu
 } from "lucide-react";
 import { SUPPORTED_LANGUAGES } from "./languages";
-import { 
-  DiffSegment, 
-  GrammarExplanation, 
-  GrammarCheckResponse, 
-  RephraseAlternative, 
-  SavedItem, 
-  Language 
+import type {
+  DiffSegment,
+  GrammarExplanation,
+  GrammarCheckResponse,
+  RephraseAlternative,
+  SavedItem,
+  Language
 } from "./types";
 import DiffHighlight from "./components/DiffHighlight";
 import SavedCollection from "./components/SavedCollection";

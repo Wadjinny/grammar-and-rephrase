@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SavedItem } from "../types";
+import type { SavedItem } from "../types";
 import { Trash2, Copy, History, ClipboardCheck, ArrowUpRight, Check, Sparkles } from "lucide-react";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
