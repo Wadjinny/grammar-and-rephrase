@@ -1,0 +1,11 @@
+grammar-and-rephrase.w-ilyas.site {
+	encode gzip
+	handle /api/* {
+		reverse_proxy localhost:3000
+	}
+	handle {
+		root * /home/ubuntu/thinkering/grammar-and-rephrase
+		try_files {path} /index.html
+		file_server
+	}
+}
