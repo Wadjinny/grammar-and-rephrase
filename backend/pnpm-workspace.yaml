@@ -1,0 +1,7 @@
+minimumReleaseAge: 1440
+overrides:
+  ws: 8.21.0
+onlyBuiltDependencies:
+  - esbuild
+  - '@google/genai'
+  - protobufjs
