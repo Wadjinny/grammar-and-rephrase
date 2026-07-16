@@ -5,5 +5,6 @@ services:
       - "3000:3000"
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PB_URL=${PB_URL}
     restart: unless-stopped
     mem_limit: 256m

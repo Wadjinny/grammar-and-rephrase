@@ -1,9 +1,9 @@
-﻿/**
+/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import express from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
@@ -11,8 +11,47 @@ dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
+const PB_URL = (process.env.PB_URL ?? "").replace(/\/$/, "");
 
 app.use(express.json());
+
+type AuthedRequest = Request & {
+  user?: Record<string, unknown>;
+};
+
+async function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
+  if (!PB_URL) {
+    console.error("PB_URL is not configured");
+    return res.status(500).json({ error: "Auth is not configured on the server." });
+  }
+
+  const authorization = req.header("authorization");
+  if (!authorization) {
+    return res.status(401).json({ error: "Authentication required." });
+  }
+
+  try {
+    const response = await fetch(`${PB_URL}/api/collections/users/auth-refresh`, {
+      method: "POST",
+      headers: { Authorization: authorization },
+    });
+
+    if (!response.ok) {
+      return res.status(401).json({ error: "Invalid or expired session." });
+    }
+
+    const data = (await response.json()) as { record?: Record<string, unknown> };
+    if (!data.record) {
+      return res.status(401).json({ error: "Invalid or expired session." });
+    }
+
+    req.user = data.record;
+    next();
+  } catch (err) {
+    console.error("Auth verification failed:", err);
+    return res.status(401).json({ error: "Could not verify session." });
+  }
+}
 
 // Global variable for Lazy loading Gemini SDK
 let aiInstance: GoogleGenAI | null = null;
@@ -38,7 +77,7 @@ function getGeminiClient(): GoogleGenAI {
 }
 
 // 1. Health check & configuration check
-app.get("/api/config", (req, res) => {
+app.get("/api/config", requireAuth, (req, res) => {
   const apiKeyExists = !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "MY_GEMINI_API_KEY";
   res.json({
     configOk: apiKeyExists,
@@ -49,7 +88,7 @@ app.get("/api/config", (req, res) => {
 });
 
 // 2. Grammar check & diff generation API
-app.post("/api/check", async (req, res) => {
+app.post("/api/check", requireAuth, async (req, res) => {
   try {
     const { text, language = "English", model = "gemini-3.5-flash" } = req.body;
     if (!text || typeof text !== "string" || text.trim() === "") {
@@ -162,7 +201,7 @@ Input Text to check:
 });
 
 // 3. Multi Rephrase API
-app.post("/api/rephrase", async (req, res) => {
+app.post("/api/rephrase", requireAuth, async (req, res) => {
   try {
     const { text, language = "English", model = "gemini-3.5-flash" } = req.body;
     if (!text || typeof text !== "string" || text.trim() === "") {

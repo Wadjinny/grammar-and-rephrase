@@ -26,9 +26,12 @@ import type {
 } from "./types";
 import DiffHighlight from "./components/DiffHighlight";
 import SavedCollection from "./components/SavedCollection";
+import LoginScreen from "./components/LoginScreen";
 import { motion, AnimatePresence } from "motion/react";
+import { authHeaders, signOut, useAuth } from "./hooks/useAuth";
 
 export default function App() {
+  const { user, isValid } = useAuth();
   const [inputText, setInputText] = useState<string>("");
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(SUPPORTED_LANGUAGES[0]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
@@ -56,9 +59,10 @@ export default function App() {
   // Saved / history collection
   const [historyItems, setHistoryItems] = useState<SavedItem[]>([]);
 
-  // Load history & Check API Key status
+  // Load history & Check API Key status (only when signed in)
   useEffect(() => {
-    // 1. Fetch saved collection
+    if (!isValid) return;
+
     try {
       const storedHistory = localStorage.getItem("gemini_linguistic_history");
       if (storedHistory) {
@@ -68,10 +72,13 @@ export default function App() {
       console.warn("Could not read localstorage history", e);
     }
 
-    // 2. Query config API to check if API key is in environment variables safely
-    fetch("/api/config")
-      .then((res) => res.json())
-      .then((data) => {
+    fetch("/api/config", { headers: authHeaders() })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          signOut();
+          return;
+        }
         setIsApiKeySet(data.configOk);
         if (!data.configOk) {
           setErrorMsg("Gemini API key is missing. Please populate GEMINI_API_KEY in the Secrets panel in AI Studio.");
@@ -81,7 +88,11 @@ export default function App() {
         console.error("Config check failed", err);
         setIsApiKeySet(false);
       });
-  }, []);
+  }, [isValid]);
+
+  if (!isValid) {
+    return <LoginScreen />;
+  }
 
   // Sync history to localStorage
   const saveHistory = (newHistory: SavedItem[]) => {
@@ -161,7 +172,7 @@ export default function App() {
     try {
       const response = await fetch("/api/check", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify({
           text: inputText,
           language: selectedLanguage.name,
@@ -169,6 +180,10 @@ export default function App() {
         })
       });
       const data = await response.json();
+      if (response.status === 401) {
+        signOut();
+        throw new Error("Session expired. Please sign in again.");
+      }
       if (!response.ok) {
         throw new Error(data.error || "Linguistic analysis failed.");
       }
@@ -203,7 +218,7 @@ export default function App() {
     try {
       const response = await fetch("/api/rephrase", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify({
           text: inputText,
           language: selectedLanguage.name,
@@ -211,6 +226,10 @@ export default function App() {
         })
       });
       const data = await response.json();
+      if (response.status === 401) {
+        signOut();
+        throw new Error("Session expired. Please sign in again.");
+      }
       if (!response.ok) {
         throw new Error(data.error || "Alternatives generation failed.");
       }
@@ -402,8 +421,28 @@ export default function App() {
               )}
             </AnimatePresence>
           </div>
-          
 
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="max-w-[140px] truncate rounded-full bg-indigo-50 px-3 py-1.5 text-[11px] font-bold text-indigo-600">
+              {(typeof user?.name === "string" && user.name) ||
+                (typeof user?.email === "string" && user.email) ||
+                "Signed in"}
+            </span>
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="rounded-full bg-white px-3.5 py-2 text-[12.5px] font-semibold text-gray-700 shadow-card transition hover:shadow-hover"
+            >
+              Sign out
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="sm:hidden rounded-full bg-white px-3.5 py-2 text-[12.5px] font-semibold text-gray-700 shadow-card"
+          >
+            Sign out
+          </button>
         </div>
       </nav>
 
