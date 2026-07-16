@@ -448,11 +448,11 @@ export default function App() {
 
       {/* API Key Missing Instruction banner */}
       {isApiKeySet === false && (
-        <div className="mx-4 sm:mx-6 mt-2 bg-indigo-50 rounded-ctrl p-3.5 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
-          <div className="text-[12.5px] text-indigo-700 leading-relaxed">
+        <div className="mx-4 sm:mx-6 mt-2 bg-amber-50 rounded-ctrl p-3.5 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-[12.5px] text-amber-700 leading-relaxed">
             <span className="font-bold">Missing Gemini API key:</span> AI actions may fail. Please ensure your 
-            <code className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md mx-1 font-mono text-[11px]">GEMINI_API_KEY</code> 
+            <code className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md mx-1 font-mono text-[11px]">GEMINI_API_KEY</code> 
             secret is populated in the AI Studio Secrets panel.
           </div>
         </div>
@@ -505,7 +505,7 @@ export default function App() {
                     Clear
                   </button>
                 )}
-                <span className={`text-[11px] font-bold select-none px-3 py-1 rounded-full ${currentLen > maxCharacters * 0.85 ? "bg-indigo-50 text-indigo-600" : "bg-gray-100 text-gray-500"}`}>
+                <span className={`text-[11px] font-bold select-none px-3 py-1 rounded-full ${currentLen > maxCharacters * 0.85 ? "bg-amber-50 text-amber-600" : "bg-gray-100 text-gray-500"}`}>
                   {currentLen} / {maxCharacters}
                 </span>
               </div>
@@ -599,8 +599,8 @@ export default function App() {
             {/* If error occurs, render it nicely */}
             {errorMsg && (
               <div className="p-4 bg-white rounded-card shadow-card flex items-start gap-3">
-                <div className="w-9 h-9 rounded-ctrl bg-gray-100 flex items-center justify-center shrink-0">
-                  <AlertCircle className="h-5 w-5 text-gray-500" />
+                <div className="w-9 h-9 rounded-ctrl bg-red-50 flex items-center justify-center shrink-0">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
                 </div>
                 <div>
                   <h4 className="text-[14px] font-bold text-gray-900">Something went wrong</h4>
@@ -644,7 +644,7 @@ export default function App() {
                       {/* Side Actions on Result text */}
                       <div className="flex flex-wrap gap-2 items-center justify-between bg-white px-4 py-3 rounded-card shadow-card">
                         <span className="text-[12.5px] text-gray-500 flex items-center gap-1.5 font-semibold">
-                          <Check className="h-4 w-4 text-indigo-600" />
+                          <Check className="h-4 w-4 text-green-600" />
                           Checked for fluency in {selectedLanguage.name}
                         </span>
 
@@ -687,7 +687,7 @@ export default function App() {
                         </h3>
                         
                         {(!checkResult.explanations || checkResult.explanations.length === 0) ? (
-                          <div className="flex items-center gap-3 bg-indigo-50 p-4 rounded-ctrl text-indigo-700 text-[12.5px]">
+                          <div className="flex items-center gap-3 bg-green-50 p-4 rounded-ctrl text-green-700 text-[12.5px]">
                             <span className="text-base select-none">🎉</span>
                             <div>
                               <span className="font-bold">No errors detected.</span> Your phrasing flows perfectly.
@@ -699,11 +699,11 @@ export default function App() {
                               <div key={i} className="py-3.5 first:pt-0 last:pb-0 flex flex-col md:flex-row gap-2.5 justify-between">
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-semibold text-[12px] text-gray-500 line-through bg-gray-100 px-2 py-0.5 rounded-md">
+                                    <span className="font-semibold text-[12px] text-red-600 line-through bg-red-50 px-2 py-0.5 rounded-md">
                                       {exp.original}
                                     </span>
                                     <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
-                                    <span className="font-semibold text-[12px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                                    <span className="font-semibold text-[12px] text-green-700 bg-green-50 px-2 py-0.5 rounded-md">
                                       {exp.corrected}
                                     </span>
                                     <span className="text-[11px] font-bold px-3 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
@@ -745,7 +745,11 @@ export default function App() {
                               cx="56"
                               cy="56"
                               r="48"
-                              className="stroke-indigo-600 transition-all duration-1000"
+                              className={`transition-all duration-1000 ${
+                                checkResult.score >= 90 ? "stroke-green-600" :
+                                checkResult.score >= 75 ? "stroke-amber-500" :
+                                "stroke-red-500"
+                              }`}
                               strokeWidth="9"
                               fill="transparent"
                               strokeDasharray={2 * Math.PI * 48}
@@ -773,21 +777,6 @@ export default function App() {
                              checkResult.score >= 75 ? "Some syntax, preposition or spelling issues were optimized." :
                              "Consider reviewing word endings, subject–verb alignment, and punctuation."}
                           </p>
-                        </div>
-                      </div>
-
-                      {/* Linguistic Quick Tips block info */}
-                      <div className="bg-white rounded-card shadow-card p-5">
-                        <div className="w-9 h-9 rounded-ctrl bg-indigo-50 flex items-center justify-center mb-3">
-                          <HelpCircle className="h-4.5 w-4.5 text-indigo-600" />
-                        </div>
-                        <h4 className="text-[14px] font-bold text-gray-900">Proofreading tips</h4>
-                        <p className="text-[12px] text-gray-500 leading-relaxed mt-1.5">
-                          Prefer active voice over passive, double-check prepositions, and align verb tenses to sound native.
-                        </p>
-                        <div className="border-t border-gray-100 mt-3.5 pt-3.5 flex items-center justify-between text-[11px] text-gray-400">
-                          <span>Verification engine</span>
-                          <span className="text-indigo-600 select-none font-bold">{MODEL_NAME}</span>
                         </div>
                       </div>
 
@@ -917,36 +906,6 @@ export default function App() {
             onClearAll={handleClearHistory}
           />
 
-          {/* Quick analysis stats card */}
-          <div className="bg-white rounded-card p-5 shadow-card">
-            <h3 className="text-[14px] font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-indigo-600" />
-              Analytics
-            </h3>
-            
-            <div className="space-y-0">
-              <div className="flex justify-between items-center text-[13px] py-2.5 border-b border-gray-100">
-                <span className="text-gray-500">Words count</span>
-                <span className="font-bold text-gray-900 tabular-nums">
-                  {inputText ? inputText.trim().split(/\s+/).filter(Boolean).length : 0}
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center text-[13px] py-2.5 border-b border-gray-100">
-                <span className="text-gray-500">Sentences</span>
-                <span className="font-bold text-gray-900 tabular-nums">
-                  {inputText ? inputText.split(/[.!?]+/).filter((s) => s.trim().length > 0).length : 0}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-[13px] py-2.5">
-                <span className="text-gray-500">Reading time</span>
-                <span className="font-bold text-gray-900 tabular-nums">
-                  {Math.max(1, Math.round((inputText ? inputText.split(/\s+/).length : 0) / 200))} min
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
       </main>

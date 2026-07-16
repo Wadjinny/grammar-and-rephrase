@@ -42,7 +42,7 @@ export default function LoginScreen() {
         </button>
 
         {error && (
-          <p className="mt-3 text-[12px] font-medium text-gray-500">{error}</p>
+          <p className="mt-3 text-[12px] font-medium text-red-600">{error}</p>
         )}
       </div>
     </div>

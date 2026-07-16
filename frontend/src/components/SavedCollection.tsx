@@ -106,7 +106,7 @@ export default function SavedCollection({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 max-h-[500px]">
+      <div className="flex-1 space-y-2.5">
         {displayedItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-center text-gray-400 gap-2">
             <div className="w-12 h-12 rounded-ctrl bg-gray-100 flex items-center justify-center mb-1">

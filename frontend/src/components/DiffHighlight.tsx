@@ -48,7 +48,7 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
           onMouseLeave={() => setHoveredId(null)}
         >
           {/* Deleted component */}
-          <span className="bg-gray-100 text-gray-500 line-through rounded-md px-1.5 py-0.5 text-sm cursor-help font-medium select-all transition-colors duration-200 hover:bg-gray-200">
+          <span className="bg-red-50 text-red-600 line-through rounded-md px-1.5 py-0.5 text-sm cursor-help font-medium select-all transition-colors duration-200 hover:bg-red-100">
             {delSeg.text}
           </span>
           
@@ -56,7 +56,7 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
           <ArrowRight className="inline h-3 w-3 text-gray-400 mx-0.5 align-middle" />
           
           {/* Inserted component */}
-          <span className="bg-indigo-50 text-indigo-700 rounded-md px-1.5 py-0.5 text-sm cursor-help font-medium select-all transition-colors duration-200 hover:bg-indigo-100">
+          <span className="bg-green-50 text-green-700 rounded-md px-1.5 py-0.5 text-sm cursor-help font-medium select-all transition-colors duration-200 hover:bg-green-100">
             {insSeg.text}
           </span>
 
@@ -76,7 +76,7 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
                   Correction applied
                 </div>
                 <div className="text-gray-500 leading-snug">
-                  Changed <span className="text-gray-500 line-through font-mono font-bold">{delSeg.text}</span> to <span className="text-indigo-600 font-mono font-bold">{insSeg.text}</span>
+                  Changed <span className="text-red-600 line-through font-mono font-bold">{delSeg.text}</span> to <span className="text-green-700 font-mono font-bold">{insSeg.text}</span>
                 </div>
                 <div className="text-gray-500 bg-indigo-50 p-2.5 rounded-[10px] leading-relaxed text-[11px]">
                   {reason}
@@ -100,7 +100,7 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
           onMouseEnter={() => setHoveredId(parentId)}
           onMouseLeave={() => setHoveredId(null)}
         >
-          <span className="bg-gray-100 text-gray-500 line-through rounded-md px-1.5 py-0.5 text-sm cursor-help font-medium select-all hover:bg-gray-200">
+          <span className="bg-red-50 text-red-600 line-through rounded-md px-1.5 py-0.5 text-sm cursor-help font-medium select-all hover:bg-red-100">
             {current.text}
           </span>
 
@@ -114,12 +114,12 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
                 className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-64 bg-white text-gray-700 text-xs rounded-ctrl shadow-hover p-3.5 flex flex-col gap-2"
                 id={`tooltip-del-${i}`}
               >
-                <div className="flex items-center gap-1.5 text-gray-500 font-bold text-[11px]">
+                <div className="flex items-center gap-1.5 text-red-600 font-bold text-[11px]">
                   <HelpCircle className="h-3 w-3" />
                   Proposed omission
                 </div>
                 <div className="text-gray-500">
-                  Remove "<span className="text-gray-500 line-through font-mono font-bold">{current.text}</span>"
+                  Remove "<span className="text-red-600 line-through font-mono font-bold">{current.text}</span>"
                 </div>
                 <div className="text-gray-500 bg-indigo-50 p-2.5 rounded-[10px] leading-relaxed text-[11px]">
                   {reason}
@@ -141,7 +141,7 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
           onMouseEnter={() => setHoveredId(parentId)}
           onMouseLeave={() => setHoveredId(null)}
         >
-          <span className="bg-indigo-50 text-indigo-700 rounded-md px-1.5 py-0.5 text-sm cursor-help font-medium select-all hover:bg-indigo-100">
+          <span className="bg-green-50 text-green-700 rounded-md px-1.5 py-0.5 text-sm cursor-help font-medium select-all hover:bg-green-100">
             {current.text}
           </span>
 
@@ -155,12 +155,12 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
                 className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-64 bg-white text-gray-700 text-xs rounded-ctrl shadow-hover p-3.5 flex flex-col gap-2"
                 id={`tooltip-ins-${i}`}
               >
-                <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-[11px]">
+                <div className="flex items-center gap-1.5 text-green-700 font-bold text-[11px]">
                   <ArrowRight className="h-3 w-3" />
                   Insertion required
                 </div>
                 <div className="text-gray-500">
-                  Insert "<span className="text-indigo-600 font-mono font-bold">{current.text}</span>"
+                  Insert "<span className="text-green-700 font-mono font-bold">{current.text}</span>"
                 </div>
                 <div className="text-gray-500 bg-indigo-50 p-2.5 rounded-[10px] leading-relaxed text-[11px]">
                   {reason}
