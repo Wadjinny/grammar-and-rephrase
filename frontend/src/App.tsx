@@ -12,8 +12,6 @@ import {
   RefreshCw, 
   ArrowRight, 
   Volume2, 
-  HelpCircle, 
-  TrendingUp, 
   AlertCircle,
   Info
 } from "lucide-react";
@@ -39,7 +37,6 @@ export default function App() {
 
   // Model (single fixed option)
   const MODEL_ID = "gemini-3.1-flash-lite";
-  const MODEL_NAME = "Gemini 3.1 Flash Lite";
 
   // UI states
   const [activeTab, setActiveTab ] = useState<"check" | "rephrase" >("check");
