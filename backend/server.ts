@@ -213,13 +213,13 @@ app.post("/api/rephrase", requireAuth, async (req, res) => {
     const targetModel = allowedModels.includes(model) ? model : "gemini-3.5-flash";
 
     const systemInstruction = `You are an expert copywriter and multilingual rephrase engine in the style of Reverso Rephraser.
-Generate exactly 5 elegant, distinct rephrasing alternatives for the provided text, each matching a specific tone:
+Generate exactly 5 elegant, distinct rephrasing alternatives for the provided text, covering these styles (do not label or return tone names):
 
-1. 'Regular / Natural': polished and fluent alternative, natural phrasing.
-2. 'Formal / Business': polite, professional, suitable for emails, resume, or business letters.
-3. 'Casual / Warm': laid-back, friendly, conversational.
-4. 'Concise / Bulletproof': short, direct, space-saver, compact word count.
-5. 'Creative / Vivid': rich expression, inspiring, stylistic flair.
+1. Polished and fluent, natural phrasing.
+2. Polite and professional, suitable for emails or business letters.
+3. Laid-back, friendly, conversational.
+4. Short, direct, compact word count.
+5. Rich expression with stylistic flair.
 
 Make sure the rephrased texts, their helpful descriptions (description), and their changes overviews (changesOverview) are entirely in the target Language: '${language}'.
 Explain briefly where to best use each alternative in a simple, friendly suggestion written entirely in the target language '${language}'.`;
@@ -245,11 +245,10 @@ All descriptions, changes overview, and suggestions MUST be written in "${langua
                 type: Type.OBJECT,
                 properties: {
                   text: { type: Type.STRING, description: "The beautiful rephrased content." },
-                  tone: { type: Type.STRING, description: "Exact tone name: 'Regular / Natural', 'Formal / Business', 'Casual / Warm', 'Concise / Bulletproof', or 'Creative / Vivid'" },
-                  description: { type: Type.STRING, description: "A very clear, human suggestion on when to use this, written entirely in the target language (e.g. 'Parfait pour envoyer Ã  vos collÃ¨gues' if selected language is French)." },
+                  description: { type: Type.STRING, description: "A very clear, human suggestion on when to use this, written entirely in the target language (e.g. 'Parfait pour envoyer à vos collègues' if selected language is French)." },
                   changesOverview: { type: Type.STRING, description: "What key change was made, in 2-5 words, written entirely in the target language (e.g. 'Vocabulaire soutenu' if selected language is French)." }
                 },
-                required: ["text", "tone", "description"]
+                required: ["text", "description"]
               }
             }
           },

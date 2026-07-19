@@ -13,6 +13,8 @@ interface SavedCollectionProps {
   onApplyItem: (item: SavedItem) => void;
   onDeleteItem: (id: string) => void;
   onClearAll: () => void;
+  /** Full-page layout shows more items per page. */
+  layout?: "sidebar" | "page";
 }
 
 export default function SavedCollection({
@@ -20,12 +22,13 @@ export default function SavedCollection({
   onApplyItem,
   onDeleteItem,
   onClearAll,
+  layout = "sidebar",
 }: SavedCollectionProps) {
   const [filter, setFilter] = useState<"all" | "check" | "rephrase">("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const ITEMS_PER_PAGE = 3;
+  const ITEMS_PER_PAGE = layout === "page" ? 8 : 3;
 
   const filteredItems = items.filter(
     (item) => filter === "all" || item.type === filter
@@ -58,7 +61,11 @@ export default function SavedCollection({
     }`;
 
   return (
-    <div className="bg-white rounded-card shadow-card p-5 flex flex-col h-full min-h-[400px]">
+    <div
+      className={`bg-white rounded-card shadow-card p-5 flex flex-col ${
+        layout === "page" ? "min-h-[520px]" : "h-full min-h-[400px]"
+      }`}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-gray-900 font-bold text-[14px]">
           <History className="h-4.5 w-4.5 text-indigo-600" />
@@ -73,6 +80,7 @@ export default function SavedCollection({
             onClick={onClearAll}
             className="text-[12px] flex items-center gap-1 text-gray-400 hover:text-gray-900 transition font-medium"
             id="clear-all-history"
+            type="button"
           >
             <Trash2 className="h-3.5 w-3.5" />
             Clear all
@@ -80,11 +88,16 @@ export default function SavedCollection({
         )}
       </div>
 
-      <div className="flex gap-1 justify-start mb-3 bg-gray-100 p-1 rounded-full">
+      <div
+        className={`flex gap-1 justify-start mb-3 bg-gray-100 p-1 rounded-full ${
+          layout === "page" ? "max-w-md" : ""
+        }`}
+      >
         <button
           onClick={() => handleFilterChange("all")}
           className={filterButtonClass(filter === "all")}
           id="filter-all"
+          type="button"
         >
           All
         </button>
@@ -92,6 +105,7 @@ export default function SavedCollection({
           onClick={() => handleFilterChange("check")}
           className={filterButtonClass(filter === "check")}
           id="filter-checked"
+          type="button"
         >
           <ClipboardCheck className="h-3 w-3" />
           Checks
@@ -100,15 +114,22 @@ export default function SavedCollection({
           onClick={() => handleFilterChange("rephrase")}
           className={filterButtonClass(filter === "rephrase")}
           id="filter-rephrases"
+          type="button"
         >
           <Sparkles className="h-3 w-3" />
           Rephrases
         </button>
       </div>
 
-      <div className="flex-1 space-y-2.5">
+      <div
+        className={
+          layout === "page"
+            ? "flex-1 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 content-start"
+            : "flex-1 space-y-2.5"
+        }
+      >
         {displayedItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-center text-gray-400 gap-2">
+          <div className="flex flex-col items-center justify-center h-48 text-center text-gray-400 gap-2 md:col-span-2 xl:col-span-3">
             <div className="w-12 h-12 rounded-ctrl bg-gray-100 flex items-center justify-center mb-1">
               <History className="h-6 w-6 stroke-[1.5] text-gray-400" />
             </div>
@@ -166,9 +187,6 @@ export default function SavedCollection({
                     <div className="space-y-1">
                       {item.rephraseOptions.slice(0, 2).map((alt, ai) => (
                         <div key={ai} className="text-[11px] text-gray-700 bg-gray-50 px-2 py-1 rounded-[8px] truncate">
-                          <span className="font-bold text-[10px] text-indigo-600 mr-1">
-                            [{alt.tone.split(" / ")[0]}]
-                          </span>
                           {alt.text}
                         </div>
                       ))}

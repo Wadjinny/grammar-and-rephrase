@@ -27,14 +27,12 @@ export interface GrammarCheckResponse {
 
 export interface RephraseAlternative {
   text: string;
-  tone: string;
-  description: string; // e.g. "Polite and professional, ideal for emails."
-  changesOverview?: string; // high level view of changes
+  description?: string;
+  changesOverview?: string;
 }
 
 export interface RephraseResponse {
   originalText: string;
-  tone: string;
   language: string;
   alternatives: RephraseAlternative[];
 }
