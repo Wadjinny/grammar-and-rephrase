@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Sparkles,
   Languages,
@@ -211,13 +211,14 @@ export default function HomePage() {
                           Result and corrections
                         </span>
                         <span className="text-[11px] text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-full select-none">
-                          Hover corrections to learn why
+                          Click a correction to revert or re-apply
                         </span>
                       </div>
 
                       <DiffHighlight
                         segments={checkResult.segments}
                         language={selectedLanguage.name}
+                        onEffectiveTextChange={setEffectiveCorrected}
                       />
                     </div>
 
@@ -230,7 +231,7 @@ export default function HomePage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() =>
-                            handleCopyText(checkResult.correctedText, "corrected")
+                            handleCopyText(correctedText, "corrected")
                           }
                           className="text-[12.5px] flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white shadow-card hover:shadow-hover text-gray-700 hover:text-indigo-600 font-semibold transition"
                           title="Copy the corrected sentence"
@@ -252,7 +253,7 @@ export default function HomePage() {
 
                         <button
                           onClick={() =>
-                            handleReadAloud(checkResult.correctedText)
+                            handleReadAloud(correctedText)
                           }
                           className="text-[12.5px] flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white shadow-card hover:shadow-hover text-gray-700 hover:text-indigo-600 font-semibold transition"
                           id="tts-corrected"
