@@ -49,7 +49,9 @@ function AppShell() {
   const goToEditorTab = (tab: "check" | "rephrase") => {
     setActiveTab(tab);
     if (onHistory) {
-      navigate("/");
+      const params = new URLSearchParams(location.search);
+      params.set("mode", tab);
+      navigate({ pathname: "/", search: params.toString() });
     }
   };
 
@@ -79,7 +81,10 @@ function AppShell() {
       id="main-container"
     >
       <nav className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 sticky top-0 z-40 bg-canvas/90 backdrop-blur-sm">
-        <NavLink to="/" className="flex items-center gap-3 shrink-0">
+        <NavLink
+          to={{ pathname: "/", search: location.search }}
+          className="flex items-center gap-3 shrink-0"
+        >
           <div className="w-10 h-10 bg-indigo-600 rounded-ctrl flex items-center justify-center shadow-pop">
             <span className="text-white font-bold text-lg select-none">G</span>
           </div>
@@ -111,7 +116,7 @@ function AppShell() {
             Multi-rephraser
           </button>
           <NavLink
-            to="/history"
+            to={{ pathname: "/history", search: location.search }}
             className={({ isActive }) =>
               `px-5 py-2 rounded-full text-[13px] transition-all inline-flex items-center gap-1.5 ${
                 isActive
@@ -263,7 +268,7 @@ function AppShell() {
           Rephraser
         </button>
         <NavLink
-          to="/history"
+          to={{ pathname: "/history", search: location.search }}
           className={({ isActive }) =>
             `flex-1 text-center py-2 rounded-full text-[13px] font-medium transition-all ${
               isActive

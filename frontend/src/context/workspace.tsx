@@ -7,6 +7,7 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
+import { useSearchParams } from "react-router";
 import { SUPPORTED_LANGUAGES } from "../languages";
 import type {
   GrammarCheckResponse,
@@ -44,8 +45,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { selectedLanguage, setSelectedLanguage, languageEpoch } = useLanguage();
   const { addItem } = useHistory();
   const { activeTab, setActiveTab } = useWorkspaceTab();
+  const [, setSearchParams] = useSearchParams();
 
-  const [inputText, setInputText] = useState("");
+  // Seed the query from the URL so a shared link restores the user's text.
+  const [inputText, setInputText] = useState(
+    () => new URLSearchParams(window.location.search).get("q") ?? ""
+  );
   const [loading, setLoading] = useState(false);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [checkResult, setCheckResult] = useState<GrammarCheckResponse | null>(
@@ -63,6 +68,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setCheckResult(null);
     setRephraseResult(null);
   }, [languageEpoch]);
+
+  // Keep the query in the URL so the current text is shareable / restorable.
+  useEffect(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (inputText) {
+          next.set("q", inputText);
+        } else {
+          next.delete("q");
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  }, [inputText, setSearchParams]);
 
   const applyHistoryItem = useCallback(
     (item: SavedItem) => {

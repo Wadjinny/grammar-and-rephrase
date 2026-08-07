@@ -1,10 +1,12 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { useSearchParams } from "react-router";
 
 export type WorkspaceTab = "check" | "rephrase";
 
@@ -17,12 +19,36 @@ const WorkspaceTabContext = createContext<WorkspaceTabContextValue | null>(
   null
 );
 
+function isWorkspaceTab(value: string | null): value is WorkspaceTab {
+  return value === "check" || value === "rephrase";
+}
+
 export function WorkspaceTabProvider({ children }: { children: ReactNode }) {
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("check");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Seed the mode from the URL so a shared link opens on the right tab.
+  const [activeTab, setActiveTabState] = useState<WorkspaceTab>(() =>
+    isWorkspaceTab(searchParams.get("mode")) ? (searchParams.get("mode") as WorkspaceTab) : "check"
+  );
+
+  const setActiveTab = useCallback(
+    (tab: WorkspaceTab) => {
+      setActiveTabState(tab);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("mode", tab);
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
 
   const value = useMemo(
     () => ({ activeTab, setActiveTab }),
-    [activeTab]
+    [activeTab, setActiveTab]
   );
 
   return (
