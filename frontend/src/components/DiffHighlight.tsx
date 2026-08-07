@@ -43,7 +43,7 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
       renderedElements.push(
         <span
           key={compoundId}
-          className="relative inline-block mx-1"
+          className="relative inline-flex items-center align-middle mx-1"
           onMouseEnter={() => setHoveredId(compoundId)}
           onMouseLeave={() => setHoveredId(null)}
         >
@@ -96,7 +96,7 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
       renderedElements.push(
         <span
           key={parentId}
-          className="relative inline-block mx-0.5"
+          className="relative inline-flex items-center align-middle mx-0.5"
           onMouseEnter={() => setHoveredId(parentId)}
           onMouseLeave={() => setHoveredId(null)}
         >
@@ -137,7 +137,7 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
       renderedElements.push(
         <span
           key={parentId}
-          className="relative inline-block mx-0.5"
+          className="relative inline-flex items-center align-middle mx-0.5"
           onMouseEnter={() => setHoveredId(parentId)}
           onMouseLeave={() => setHoveredId(null)}
         >
@@ -174,7 +174,7 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
     } else {
       // Unmodified segment
       renderedElements.push(
-        <span key={current.id} className="text-gray-700 text-sm whitespace-pre-wrap select-text leading-relaxed">
+        <span key={current.id} className="text-gray-700 text-sm whitespace-pre-wrap select-text align-middle">
           {current.text}
         </span>
       );
@@ -182,8 +182,8 @@ export default function DiffHighlight({ segments }: DiffHighlightProps) {
   }
 
   return (
-    <div className="bg-white p-5 rounded-card min-h-[140px] shadow-card leading-relaxed antialiased select-all relative overflow-visible">
-      <div className="flex flex-wrap items-center gap-y-1">
+    <div className="bg-white p-5 rounded-card min-h-[140px] shadow-card antialiased select-all relative overflow-visible">
+      <div className="text-left leading-[2.4]">
         {renderedElements}
       </div>
     </div>
