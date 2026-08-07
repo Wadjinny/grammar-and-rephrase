@@ -39,6 +39,15 @@ export default function HomePage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentLen = inputText.length;
 
+  // Effective corrected text, reflecting any corrections the user reverts.
+  const [effectiveCorrected, setEffectiveCorrected] = useState<string | null>(
+    null
+  );
+  useEffect(() => {
+    setEffectiveCorrected(null);
+  }, [checkResult]);
+  const correctedText = effectiveCorrected ?? checkResult?.correctedText ?? "";
+
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
