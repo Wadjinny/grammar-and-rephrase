@@ -34,8 +34,10 @@ pnpm dev
 ```bash
 cd frontend
 pnpm install
+cp .env.example .env   # set VITE_PB_URL
 pnpm dev
 ```
+
 
 ## Deploy
 
