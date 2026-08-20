@@ -2,7 +2,11 @@ services:
   backend:
     image: ghcr.io/wadjinny/grammar-and-rephrase/backend:${IMAGE_TAG:-latest}
     ports:
-      - "3000:3000"
+      # Bind loopback only: Caddy reverse-proxies from the host, so nothing
+      # off-box needs to reach this. An unqualified "3000:3000" binds 0.0.0.0,
+      # and Docker's DNAT rules are traversed before ufw's, so the port would
+      # be publicly reachable even with a host firewall that appears to block it.
+      - "127.0.0.1:3000:3000"
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - PB_URL=${PB_URL}

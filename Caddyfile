@@ -1,7 +1,9 @@
 grammar-and-rephrase.w-ilyas.site {
 	encode gzip
 	handle /api/* {
-		reverse_proxy localhost:3000
+		# 127.0.0.1, not localhost: the container publishes on IPv4 loopback only,
+		# and "localhost" can resolve to ::1 first, costing a failed dial per request.
+		reverse_proxy 127.0.0.1:3000
 	}
 	handle {
 		root * /home/ubuntu/thinkering/grammar-and-rephrase
