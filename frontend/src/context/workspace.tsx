@@ -10,6 +10,7 @@ import {
 import { useSearchParams } from "react-router";
 import { SUPPORTED_LANGUAGES } from "../languages";
 import type {
+  CheckOptions,
   GrammarCheckResponse,
   RephraseAlternative,
   SavedItem,
@@ -18,8 +19,6 @@ import { authHeaders, signOut } from "../hooks/useAuth";
 import { useHistory } from "./history";
 import { useLanguage } from "./language";
 import { useWorkspaceTab } from "./workspace-tab";
-
-const MODEL_ID = "gemini-3.1-flash-lite";
 
 type WorkspaceContextValue = {
   inputText: string;
@@ -30,6 +29,8 @@ type WorkspaceContextValue = {
   rephraseResult: RephraseAlternative[] | null;
   errorMsg: string | null;
   maxCharacters: number;
+  checkOptions: CheckOptions;
+  setCheckOption: (key: keyof CheckOptions, value: boolean) => void;
   handleTextChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
   handleClearText: () => void;
   handleInjectExample: (exampleText: string) => void;
@@ -40,6 +41,23 @@ type WorkspaceContextValue = {
 };
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
+
+const CHECK_OPTIONS_KEY = "grammar_check_options";
+const DEFAULT_CHECK_OPTIONS: CheckOptions = {
+  keepAbbreviations: false,
+  endWithFullStop: false,
+  allowMixedLanguages: false,
+};
+
+function readStoredCheckOptions(): CheckOptions {
+  try {
+    const stored = localStorage.getItem(CHECK_OPTIONS_KEY);
+    if (stored) return { ...DEFAULT_CHECK_OPTIONS, ...JSON.parse(stored) };
+  } catch (e) {
+    console.warn("Could not read stored check options", e);
+  }
+  return DEFAULT_CHECK_OPTIONS;
+}
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { selectedLanguage, setSelectedLanguage, languageEpoch } = useLanguage();
@@ -60,6 +78,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     RephraseAlternative[] | null
   >(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [checkOptions, setCheckOptions] = useState<CheckOptions>(
+    readStoredCheckOptions
+  );
+
+  const setCheckOption = useCallback(
+    (key: keyof CheckOptions, value: boolean) => {
+      setCheckOptions((prev) => {
+        const next = { ...prev, [key]: value };
+        try {
+          localStorage.setItem(CHECK_OPTIONS_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.warn("Could not store check options", e);
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   const maxCharacters = 1500;
 
@@ -142,13 +178,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setErrorMsg(null);
     try {
+      // No model: the server picks one from its fallback chain
       const response = await fetch("/api/check", {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({
           text: inputText,
           language: selectedLanguage.name,
-          model: MODEL_ID,
+          options: checkOptions,
         }),
       });
       const data = await response.json();
@@ -186,13 +223,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setErrorMsg(null);
     try {
+      // No model: the server picks one from its fallback chain
       const response = await fetch("/api/rephrase", {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({
           text: inputText,
           language: selectedLanguage.name,
-          model: MODEL_ID,
         }),
       });
       const data = await response.json();
@@ -273,6 +310,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         rephraseResult,
         errorMsg,
         maxCharacters,
+        checkOptions,
+        setCheckOption,
         handleTextChange,
         handleClearText,
         handleInjectExample,

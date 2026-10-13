@@ -7,10 +7,14 @@
   "scripts": {
     "dev": "tsx watch server.ts",
     "start": "NODE_ENV=production node dist/server.js",
-    "build": "esbuild server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js"
+    "build": "esbuild server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js",
+    "test": "tsx --test check.test.ts rephrase.test.ts",
+    "eval:check": "tsx eval/check-eval.ts",
+    "eval:rephrase": "tsx eval/rephrase-eval.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "diff": "^8.0.4",
     "dotenv": "^17.2.3",
     "express": "^4.21.2"
   },

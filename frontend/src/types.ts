@@ -17,6 +17,13 @@ export interface GrammarExplanation {
   explanation: string;
 }
 
+/** Author preferences sent with each grammar check */
+export interface CheckOptions {
+  keepAbbreviations: boolean;
+  endWithFullStop: boolean;
+  allowMixedLanguages: boolean;
+}
+
 export interface GrammarCheckResponse {
   correctedText: string;
   language: string;

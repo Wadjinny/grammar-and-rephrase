@@ -28,6 +28,8 @@ export default function HomePage() {
     rephraseResult,
     errorMsg,
     maxCharacters,
+    checkOptions,
+    setCheckOption,
     handleTextChange,
     handleClearText,
     handleInjectExample,
@@ -127,8 +129,8 @@ export default function HomePage() {
             )}
           </div>
 
-          <div className="p-4 border-t border-gray-100 flex items-center justify-between gap-4">
-            <div className="flex gap-2">
+          <div className="p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
               {inputText && (
                 <button
                   onClick={() => handleReadAloud(inputText)}
@@ -139,6 +141,31 @@ export default function HomePage() {
                 >
                   <Volume2 className="h-4 w-4" />
                 </button>
+              )}
+              {activeTab === "check" && (
+                <>
+                  <OptionToggle
+                    id="option-keep-abbreviations"
+                    label="Keep abbreviations"
+                    title="Leave abbreviations like pls, btw or ASAP as you wrote them"
+                    checked={checkOptions.keepAbbreviations}
+                    onChange={(value) => setCheckOption("keepAbbreviations", value)}
+                  />
+                  <OptionToggle
+                    id="option-end-with-full-stop"
+                    label="End with full stop"
+                    title="Make sure the corrected text ends with a full stop"
+                    checked={checkOptions.endWithFullStop}
+                    onChange={(value) => setCheckOption("endWithFullStop", value)}
+                  />
+                  <OptionToggle
+                    id="option-allow-mixed-languages"
+                    label="Allow mixed languages"
+                    title={`Keep correct words from other languages (e.g. English terms in a ${selectedLanguage.name === "English" ? "French" : selectedLanguage.name} text)`}
+                    checked={checkOptions.allowMixedLanguages}
+                    onChange={(value) => setCheckOption("allowMixedLanguages", value)}
+                  />
+                </>
               )}
             </div>
 
@@ -480,5 +507,44 @@ export default function HomePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+function OptionToggle({
+  id,
+  label,
+  title,
+  checked,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  title: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <button
+      id={id}
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      title={title}
+      onClick={() => onChange(!checked)}
+      className={`flex items-center gap-2 h-10 px-3.5 rounded-full text-[12px] font-semibold transition cursor-pointer ${
+        checked
+          ? "bg-indigo-50 text-indigo-600"
+          : "bg-gray-100 text-gray-500 hover:text-gray-900"
+      }`}
+    >
+      <span
+        className={`h-4 w-4 rounded-full flex items-center justify-center transition ${
+          checked ? "bg-indigo-600" : "bg-white ring-1 ring-gray-300"
+        }`}
+      >
+        {checked && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
+      </span>
+      {label}
+    </button>
   );
 }

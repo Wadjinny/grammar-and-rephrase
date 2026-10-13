@@ -188,7 +188,7 @@ export default function DiffHighlight({
 
     const isReverted = reverted.has(token.id);
     const chipBase =
-      "rounded-md px-1.5 py-0.5 text-sm font-medium transition-colors duration-200";
+      "rounded-md px-1 py-0.5 text-sm font-medium transition-colors duration-200";
 
     let inner: React.ReactNode;
     let heading: React.ReactNode;
@@ -200,8 +200,8 @@ export default function DiffHighlight({
           <span
             className={`${chipBase} ${
               isReverted
-                ? "bg-red-100 text-red-700"
-                : "bg-red-50 text-red-500 line-through opacity-70"
+                ? "bg-gray-200 text-gray-800"
+                : "bg-gray-100 text-gray-500 line-through"
             }`}
           >
             {token.original}
@@ -231,7 +231,7 @@ export default function DiffHighlight({
       body = (
         <>
           Changed{" "}
-          <span className="text-red-600 line-through font-mono font-bold">
+          <span className="text-gray-500 line-through font-mono font-bold">
             {token.original}
           </span>{" "}
           to{" "}
@@ -246,14 +246,14 @@ export default function DiffHighlight({
           className={`${chipBase} ${
             isReverted
               ? "bg-transparent text-gray-700 underline decoration-dotted decoration-gray-300"
-              : "bg-red-50 text-red-600 line-through"
+              : "bg-gray-100 text-gray-500 line-through"
           }`}
         >
           {token.original}
         </span>
       );
       heading = (
-        <div className="flex items-center gap-1.5 text-red-600 font-bold text-[11px]">
+        <div className="flex items-center gap-1.5 text-gray-600 font-bold text-[11px]">
           <HelpCircle className="h-3 w-3" />
           {isReverted ? "Word kept" : "Proposed omission"}
         </div>
@@ -261,7 +261,7 @@ export default function DiffHighlight({
       body = (
         <>
           Remove "
-          <span className="text-red-600 line-through font-mono font-bold">
+          <span className="text-gray-500 line-through font-mono font-bold">
             {token.original}
           </span>
           "
@@ -303,7 +303,7 @@ export default function DiffHighlight({
         tabIndex={0}
         aria-pressed={!isReverted}
         title={isReverted ? "Click to re-apply" : "Click to keep original"}
-        className="group relative inline-flex items-center align-middle mx-0.5 cursor-pointer rounded-md ring-indigo-200 hover:ring-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        className="group relative inline-flex items-center align-middle cursor-pointer rounded-md ring-indigo-200 hover:ring-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
         onMouseEnter={() => setHoveredId(token.id)}
         onMouseLeave={() => setHoveredId(null)}
         onClick={() => toggle(token.id)}
@@ -315,7 +315,8 @@ export default function DiffHighlight({
         }}
       >
         {inner}
-        <span className="ml-0.5 inline-flex items-center text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Floats over the corner so it never adds width: spacing comes only from the text itself */}
+        <span className="pointer-events-none absolute -top-2 -right-2 hidden h-4 w-4 items-center justify-center rounded-full bg-white shadow-card group-hover:flex group-focus-visible:flex">
           {isReverted ? (
             <Redo2 className="h-3 w-3 text-indigo-400" />
           ) : (

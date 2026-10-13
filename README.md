@@ -25,7 +25,7 @@ Grammar checker and rephraser powered by Gemini. Paste text for corrections with
 ```bash
 cd backend
 pnpm install
-cp .env.example .env   # set GEMINI_API_KEY and PB_URL
+cp .env.example .env   # set GEMINI_API_KEY, CEREBRAS_API_KEY, GROQ_API_KEY and PB_URL
 pnpm dev
 ```
 
