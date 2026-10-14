@@ -19,3 +19,54 @@ body {
   background: var(--color-canvas);
   font-family: var(--font-sans);
 }
+
+/* Rich text input (Tiptap): Tailwind's preflight strips list, heading and quote styles */
+.rich-input p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-gray-400);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.rich-input > * + * {
+  margin-top: 0.5em;
+}
+.rich-input ul {
+  list-style: disc;
+  padding-left: 1.4em;
+}
+.rich-input ol {
+  list-style: decimal;
+  padding-left: 1.4em;
+}
+.rich-input li > * + * {
+  margin-top: 0.25em;
+}
+.rich-input h1,
+.rich-input h2,
+.rich-input h3 {
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+.rich-input h1 {
+  font-size: 1.3em;
+}
+.rich-input h2 {
+  font-size: 1.15em;
+}
+.rich-input blockquote {
+  border-left: 3px solid var(--color-gray-200);
+  padding-left: 0.8em;
+  color: var(--color-gray-500);
+}
+.rich-input a {
+  color: var(--color-indigo-600);
+  text-decoration: underline;
+}
+.rich-input code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.92em;
+  background: var(--color-gray-100);
+  border-radius: 4px;
+  padding: 0 0.25em;
+}

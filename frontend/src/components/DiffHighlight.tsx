@@ -5,28 +5,47 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { DiffSegment } from "../types";
+import {
+  compose,
+  correctionRuns,
+  linePrefix,
+  runs,
+  type Piece,
+  type RichMark,
+  type RichText,
+} from "../lib/richText";
 import { Info, HelpCircle, ArrowRight, Undo2, Redo2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 interface DiffHighlightProps {
   segments: DiffSegment[];
   language: string;
-  /** Called with the effective text whenever the user reverts/re-applies a correction. */
-  onEffectiveTextChange?: (text: string) => void;
+  /** The formatted input the segments were computed from; enables formatted rendering and output */
+  rich?: RichText | null;
+  /**
+   * Called with the effective result whenever the user reverts or re-applies a correction:
+   * plain text, plus formatted text when `rich` matches the segments.
+   */
+  onEffectiveChange?: (result: { text: string; rich: RichText | null }) => void;
 }
 
-/** A parsed unit of the diff: either untouched text or a single revertable correction. */
+/**
+ * A parsed unit of the diff: either untouched text or a single revertable correction. `start`/`end`
+ * (or `at` for insertions) are positions in the original text, used to map formatting.
+ */
 type Token =
-  | { kind: "text"; id: string; text: string }
+  | { kind: "text"; id: string; text: string; start: number; end: number }
   | {
       kind: "replace";
       id: string;
       original: string;
       corrected: string;
       reason: string;
+      start: number;
+      end: number;
     }
-  | { kind: "delete"; id: string; original: string; reason: string }
-  | { kind: "insert"; id: string; corrected: string; reason: string };
+  | { kind: "delete"; id: string; original: string; reason: string; start: number; end: number }
+  | { kind: "insert"; id: string; corrected: string; reason: string; at: number };
 
 /** Parse the raw segments into tokens, pairing deleted+inserted into a single replacement. */
 function parseTokens(segments: DiffSegment[]): Token[] {
@@ -36,25 +55,33 @@ function parseTokens(segments: DiffSegment[]): Token[] {
   }));
 
   const tokens: Token[] = [];
+  let pos = 0; // position in the original text
   for (let i = 0; i < withIds.length; i++) {
     const current = withIds[i];
     const next = withIds[i + 1];
+    const start = pos;
 
     if (current.type === "deleted" && next && next.type === "inserted") {
+      pos += current.text.length;
       tokens.push({
         kind: "replace",
         id: `compound-${current.id}-${next.id}`,
         original: current.text,
         corrected: next.text,
         reason: next.reason || current.reason || "Grammar improvement",
+        start,
+        end: pos,
       });
       i++; // consume the paired inserted segment
     } else if (current.type === "deleted") {
+      pos += current.text.length;
       tokens.push({
         kind: "delete",
         id: current.id,
         original: current.text,
         reason: current.reason || "Unnecessary word deleted",
+        start,
+        end: pos,
       });
     } else if (current.type === "inserted") {
       tokens.push({
@@ -62,12 +89,51 @@ function parseTokens(segments: DiffSegment[]): Token[] {
         id: current.id,
         corrected: current.text,
         reason: current.reason || "Vocabulary or stylistic enhancement",
+        at: start,
       });
     } else {
-      tokens.push({ kind: "text", id: current.id, text: current.text });
+      pos += current.text.length;
+      tokens.push({ kind: "text", id: current.id, text: current.text, start, end: pos });
     }
   }
   return tokens;
+}
+
+/** The same result as effectiveText, as steps that rebuild it from the original (for formatting). */
+function effectivePieces(tokens: Token[], reverted: Set<string>): Piece[] {
+  return tokens.flatMap((t): Piece[] => {
+    const keep: Piece[] = t.kind === "insert" ? [] : [{ keep: [t.start, t.end] }];
+    switch (t.kind) {
+      case "text":
+        return keep;
+      case "replace":
+        return reverted.has(t.id) ? keep : [{ insert: t.corrected, at: t.start, end: t.end }];
+      case "delete":
+        return reverted.has(t.id) ? keep : [];
+      case "insert":
+        return reverted.has(t.id) ? [] : [{ insert: t.corrected, at: t.at }];
+    }
+  });
+}
+
+/** Wraps text in its formatting for the diff view (links are shown, not clickable). */
+function withMarks(content: React.ReactNode, marks: RichMark[], heading: boolean): React.ReactNode {
+  let node = content;
+  for (const m of [...marks].reverse()) {
+    if (m.type === "bold") node = <strong className="font-bold">{node}</strong>;
+    else if (m.type === "italic") node = <em>{node}</em>;
+    else if (m.type === "underline") node = <u>{node}</u>;
+    else if (m.type === "strike") node = <s>{node}</s>;
+    else if (m.type === "code")
+      node = <code className="font-mono text-[0.92em] bg-gray-100 rounded px-0.5">{node}</code>;
+    else if (m.type === "link")
+      node = (
+        <span className="text-indigo-600 underline decoration-indigo-300" title={m.href}>
+          {node}
+        </span>
+      );
+  }
+  return heading ? <span className="font-semibold text-gray-900">{node}</span> : node;
 }
 
 /** The resulting text given which corrections the user has reverted. */
@@ -90,7 +156,8 @@ function effectiveText(tokens: Token[], reverted: Set<string>): string {
 
 export default function DiffHighlight({
   segments,
-  onEffectiveTextChange,
+  rich,
+  onEffectiveChange,
 }: DiffHighlightProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [reverted, setReverted] = useState<Set<string>>(() => new Set());
@@ -102,21 +169,85 @@ export default function DiffHighlight({
     setReverted(new Set());
   }, [segments]);
 
-  const resultText = useMemo(
-    () => effectiveText(tokens, reverted),
-    [tokens, reverted]
+  // Formatting only applies if it belongs to exactly the text these segments were computed from
+  const source = useMemo(() => {
+    if (!rich) return null;
+    const original = segments.filter((s) => s.type !== "inserted").map((s) => s.text).join("");
+    return original === rich.text ? rich : null;
+  }, [rich, segments]);
+
+  const lineOf = useMemo(() => {
+    const lines: number[] = [];
+    let n = 0;
+    for (const ch of source?.text ?? "") {
+      for (let i = 0; i < ch.length; i++) lines.push(n);
+      if (ch === "\n") n++;
+    }
+    return lines;
+  }, [source]);
+
+  const result = useMemo(
+    () => ({
+      text: effectiveText(tokens, reverted),
+      rich: source ? compose(source, effectivePieces(tokens, reverted)) : null,
+    }),
+    [tokens, reverted, source]
   );
 
-  // Report the effective text upward without depending on the callback identity.
-  const onChangeRef = useRef(onEffectiveTextChange);
-  onChangeRef.current = onEffectiveTextChange;
+  // Report the effective result upward without depending on the callback identity.
+  const onChangeRef = useRef(onEffectiveChange);
+  onChangeRef.current = onEffectiveChange;
   useEffect(() => {
-    onChangeRef.current?.(resultText);
-  }, [resultText]);
+    onChangeRef.current?.(result);
+  }, [result]);
 
   if (!segments || segments.length === 0) {
     return <p className="text-gray-500 italic">No corrections to display.</p>;
   }
+
+  // Bullets, numbers and quote bars at the start of original lines
+  const lineStart = (n: number): React.ReactNode => {
+    const line = source?.lines[n];
+    if (!line) return null;
+    if (line.kind.type === "quote")
+      return (
+        <span key={`line-${n}`} className="text-gray-300 select-none">
+          {"│ "}
+        </span>
+      );
+    const prefix = linePrefix(line);
+    return prefix ? (
+      <span key={`line-${n}`} className="text-gray-400 select-none whitespace-pre">
+        {prefix}
+      </span>
+    ) : null;
+  };
+  const isHeading = (i: number) => source?.lines[lineOf[i]]?.kind.type === "heading";
+
+  /** Original text [start, end) with its formatting; a line break also draws the next line's marker. */
+  const original = (start: number, end: number, fallback: string): React.ReactNode =>
+    source
+      ? runs(source, start, end).map((r) => (
+          <React.Fragment key={r.start}>
+            {r.text === "\n" ? (
+              <>
+                {"\n"}
+                {lineStart(lineOf[r.start] + 1)}
+              </>
+            ) : (
+              withMarks(r.text, r.marks, isHeading(r.start))
+            )}
+          </React.Fragment>
+        ))
+      : fallback;
+
+  /** Corrected text with the formatting it takes from what it replaces ([at, end)) or follows. */
+  const corrected = (text: string, at: number, end?: number): React.ReactNode =>
+    source
+      ? correctionRuns(source, text, at, end).map((r, i) => (
+          <React.Fragment key={i}>{withMarks(r.text, r.marks, isHeading(at))}</React.Fragment>
+        ))
+      : text;
 
   const toggle = (id: string) =>
     setReverted((prev) => {
@@ -181,7 +312,7 @@ export default function DiffHighlight({
           key={token.id}
           className="text-gray-700 text-sm whitespace-pre-wrap select-text align-middle"
         >
-          {token.text}
+          {original(token.start, token.end, token.text)}
         </span>
       );
     }
@@ -190,37 +321,28 @@ export default function DiffHighlight({
     const chipBase =
       "rounded-md px-1 py-0.5 text-sm font-medium transition-colors duration-200";
 
+    // Only the current text is shown: the correction while applied, the original once reverted.
+    // A removed word (or a reverted insertion) has no current text, so it gets a small marker to click.
+    const appliedChip = `${chipBase} bg-green-100 text-green-700`;
+    const keptChip = `${chipBase} bg-gray-100 text-gray-700`;
+    const marker = (label: string) => (
+      <span
+        aria-label={label}
+        className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-400"
+      >
+        •
+      </span>
+    );
+
     let inner: React.ReactNode;
     let heading: React.ReactNode;
     let body: React.ReactNode;
 
     if (token.kind === "replace") {
-      inner = (
-        <>
-          <span
-            className={`${chipBase} ${
-              isReverted
-                ? "bg-gray-200 text-gray-800"
-                : "bg-gray-100 text-gray-500 line-through"
-            }`}
-          >
-            {token.original}
-          </span>
-          <ArrowRight
-            className={`inline h-3 w-3 mx-0.5 align-middle ${
-              isReverted ? "text-gray-300 rotate-180" : "text-gray-400"
-            }`}
-          />
-          <span
-            className={`${chipBase} ${
-              isReverted
-                ? "bg-green-50 text-green-600 line-through opacity-70"
-                : "bg-green-100 text-green-700"
-            }`}
-          >
-            {token.corrected}
-          </span>
-        </>
+      inner = isReverted ? (
+        <span className={keptChip}>{original(token.start, token.end, token.original)}</span>
+      ) : (
+        <span className={appliedChip}>{corrected(token.corrected, token.start, token.end)}</span>
       );
       heading = (
         <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-[11px]">
@@ -241,16 +363,10 @@ export default function DiffHighlight({
         </>
       );
     } else if (token.kind === "delete") {
-      inner = (
-        <span
-          className={`${chipBase} ${
-            isReverted
-              ? "bg-transparent text-gray-700 underline decoration-dotted decoration-gray-300"
-              : "bg-gray-100 text-gray-500 line-through"
-          }`}
-        >
-          {token.original}
-        </span>
+      inner = isReverted ? (
+        <span className={keptChip}>{original(token.start, token.end, token.original)}</span>
+      ) : (
+        marker(`Removed "${token.original}"`)
       );
       heading = (
         <div className="flex items-center gap-1.5 text-gray-600 font-bold text-[11px]">
@@ -268,16 +384,10 @@ export default function DiffHighlight({
         </>
       );
     } else {
-      inner = (
-        <span
-          className={`${chipBase} ${
-            isReverted
-              ? "bg-green-50 text-green-500 line-through opacity-70"
-              : "bg-green-100 text-green-700"
-          }`}
-        >
-          {token.corrected}
-        </span>
+      inner = isReverted ? (
+        marker(`Skipped "${token.corrected}"`)
+      ) : (
+        <span className={appliedChip}>{corrected(token.corrected, token.at)}</span>
       );
       heading = (
         <div className="flex items-center gap-1.5 text-green-700 font-bold text-[11px]">
@@ -331,6 +441,7 @@ export default function DiffHighlight({
   return (
     <div className="bg-white p-5 rounded-card min-h-[140px] shadow-card antialiased relative overflow-visible">
       <div className="text-left leading-[2.4] select-text">
+        {lineStart(0)}
         {renderedElements}
       </div>
 

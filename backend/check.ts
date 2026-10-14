@@ -58,6 +58,7 @@ function systemInstruction(options: CheckOptions): string {
   return `You are a meticulous proofreader and language teacher.
 Correct every grammar, spelling, punctuation, and word-choice error in the user's text.
 Keep the author's meaning, tone, and wording wherever they are already correct: do not rephrase correct sentences.
+Keep every line break exactly where it is: each line can be a separate paragraph or list item.
 ${rules.length ? `\nThe author's preferences:\n${rules.join("\n")}\n` : ""}
 Return:
 - correctedText: the full corrected text.
@@ -246,13 +247,14 @@ export function buildSegments(original: string, corrected: string, edits: ModelE
     }
   }
 
-  // Changes separated only by whitespace read better as one replacement ("me and" -> "my friend and").
-  // The whitespace goes on both sides, so the rebuild guarantees still hold.
+  // Changes separated only by spaces read better as one replacement ("me and" -> "my friend and").
+  // The whitespace goes on both sides, so the rebuild guarantees still hold. Line breaks never
+  // merge: each line can be its own paragraph or list item in formatted input.
   const merged: Hunk[] = [];
   for (const h of hunks) {
     const prev = merged[merged.length - 1];
     const prev2 = merged[merged.length - 2];
-    if (h.kind === "change" && prev?.kind === "same" && /^\s+$/.test(prev.text) && prev2?.kind === "change") {
+    if (h.kind === "change" && prev?.kind === "same" && /^[^\S\n]+$/.test(prev.text) && prev2?.kind === "change") {
       prev2.deleted += prev.text + h.deleted;
       prev2.inserted += prev.text + h.inserted;
       merged.pop();

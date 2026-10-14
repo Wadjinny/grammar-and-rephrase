@@ -4,7 +4,6 @@ import {
   useContext,
   useEffect,
   useState,
-  type ChangeEvent,
   type ReactNode,
 } from "react";
 import { useSearchParams } from "react-router";
@@ -16,6 +15,7 @@ import type {
   SavedItem,
 } from "../types";
 import { authHeaders, signOut } from "../hooks/useAuth";
+import { fromDoc, plainToDoc, type DocNode, type RichText } from "../lib/richText";
 import { useHistory } from "./history";
 import { useLanguage } from "./language";
 import { useWorkspaceTab } from "./workspace-tab";
@@ -31,7 +31,13 @@ type WorkspaceContextValue = {
   maxCharacters: number;
   checkOptions: CheckOptions;
   setCheckOption: (key: keyof CheckOptions, value: boolean) => void;
-  handleTextChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+  /** The editor document; replaced from outside whenever `inputDocVersion` changes */
+  inputDoc: DocNode;
+  inputDocVersion: number;
+  handleEditorChange: (doc: DocNode, rich: RichText) => void;
+  /** The formatted input the current check result was computed from (null for history items) */
+  checkSource: RichText | null;
+  handleCopyRich: (html: string, text: string, label: string) => void;
   handleClearText: () => void;
   handleInjectExample: (exampleText: string) => void;
   handleTrigger: () => Promise<void>;
@@ -65,10 +71,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { activeTab, setActiveTab } = useWorkspaceTab();
   const [, setSearchParams] = useSearchParams();
 
-  // Seed the query from the URL so a shared link restores the user's text.
-  const [inputText, setInputText] = useState(
-    () => new URLSearchParams(window.location.search).get("q") ?? ""
-  );
+  // The editor document is the source of truth; inputText is its plain text, which is what the
+  // API checks. Seed it from the URL so a shared link restores the user's text.
+  const [input, setInput] = useState(() => {
+    const doc = plainToDoc(new URLSearchParams(window.location.search).get("q") ?? "");
+    return { doc, rich: fromDoc(doc), version: 0 };
+  });
+  const inputText = input.rich.text;
+  const [checkSource, setCheckSource] = useState<RichText | null>(null);
+
+  /** Replaces the input from outside the editor (examples, history, clear) as plain text. */
+  const setInputText = useCallback((text: string) => {
+    const doc = plainToDoc(text);
+    setInput((prev) => ({ doc, rich: fromDoc(doc), version: prev.version + 1 }));
+  }, []);
+
+  const handleEditorChange = useCallback((doc: DocNode, rich: RichText) => {
+    setInput((prev) => ({ doc, rich, version: prev.version }));
+  }, []);
   const [loading, setLoading] = useState(false);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [checkResult, setCheckResult] = useState<GrammarCheckResponse | null>(
@@ -142,6 +162,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           ],
           explanations: [],
         });
+        setCheckSource(null);
         setRephraseResult(null);
       } else if (item.type === "rephrase" && item.rephraseOptions) {
         setActiveTab("rephrase");
@@ -149,15 +170,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setCheckResult(null);
       }
     },
-    [setActiveTab, setSelectedLanguage]
+    [setActiveTab, setSelectedLanguage, setInputText]
   );
-
-  const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value;
-    if (text.length <= maxCharacters) {
-      setInputText(text);
-    }
-  };
 
   const handleClearText = () => {
     setInputText("");
@@ -175,6 +189,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const handleCheckGrammar = async () => {
     if (!inputText.trim()) return;
+    // The result's diff positions refer to exactly this text, so keep its formatting with it
+    const source = input.rich;
     setLoading(true);
     setErrorMsg(null);
     try {
@@ -183,7 +199,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({
-          text: inputText,
+          text: source.text,
           language: selectedLanguage.name,
           options: checkOptions,
         }),
@@ -197,6 +213,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         throw new Error(data.error || "Linguistic analysis failed.");
       }
       setCheckResult(data);
+      setCheckSource(source);
 
       addItem({
         id: "sav-" + Date.now().toString(36),
@@ -276,6 +293,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setCopiedText(null), 2000);
   };
 
+  /** Copies formatted text for mail, Teams or Word, with plain text for fields that don't take HTML. */
+  const handleCopyRich = (html: string, text: string, label: string) => {
+    const write =
+      typeof ClipboardItem === "undefined"
+        ? Promise.reject(new Error("ClipboardItem is not supported"))
+        : navigator.clipboard.write([
+            new ClipboardItem({
+              "text/html": new Blob([html], { type: "text/html" }),
+              "text/plain": new Blob([text], { type: "text/plain" }),
+            }),
+          ]);
+    write.catch(() => navigator.clipboard.writeText(text));
+    setCopiedText(label);
+    setTimeout(() => setCopiedText(null), 2000);
+  };
+
   const handleReadAloud = (text: string) => {
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
@@ -312,7 +345,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         maxCharacters,
         checkOptions,
         setCheckOption,
-        handleTextChange,
+        inputDoc: input.doc,
+        inputDocVersion: input.version,
+        handleEditorChange,
+        checkSource,
+        handleCopyRich,
         handleClearText,
         handleInjectExample,
         handleTrigger,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Sparkles,
   Languages,
@@ -11,6 +11,8 @@ import {
   Info,
 } from "lucide-react";
 import DiffHighlight from "../components/DiffHighlight";
+import RichTextInput from "../components/RichTextInput";
+import { toHtml, toPlainText, type RichText } from "../lib/richText";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "../context/language";
 import { useWorkspace } from "../context/workspace";
@@ -30,7 +32,11 @@ export default function HomePage() {
     maxCharacters,
     checkOptions,
     setCheckOption,
-    handleTextChange,
+    inputDoc,
+    inputDocVersion,
+    handleEditorChange,
+    checkSource,
+    handleCopyRich,
     handleClearText,
     handleInjectExample,
     handleTrigger,
@@ -38,21 +44,24 @@ export default function HomePage() {
     handleReadAloud,
   } = useWorkspace();
 
-  const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentLen = inputText.length;
 
-  // Effective corrected text, reflecting any corrections the user reverts.
-  const [effectiveCorrected, setEffectiveCorrected] = useState<string | null>(
-    null
-  );
+  // Effective corrected text (plain, and formatted when the input was), reflecting any reverts.
+  const [effectiveCorrected, setEffectiveCorrected] = useState<{
+    text: string;
+    rich: RichText | null;
+  } | null>(null);
   useEffect(() => {
     setEffectiveCorrected(null);
   }, [checkResult]);
-  const correctedText = effectiveCorrected ?? checkResult?.correctedText ?? "";
+  const correctedText =
+    effectiveCorrected?.text ?? checkResult?.correctedText ?? "";
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  const copyCorrected = () => {
+    const rich = effectiveCorrected?.rich;
+    if (rich) handleCopyRich(toHtml(rich), toPlainText(rich), "corrected");
+    else handleCopyText(correctedText, "corrected");
+  };
 
   return (
     <main className="flex-1 max-w-[1280px] w-full mx-auto p-4 sm:px-6 sm:pb-10">
@@ -90,15 +99,12 @@ export default function HomePage() {
           </div>
 
           <div className="relative flex-1 flex flex-col">
-            <textarea
-              ref={inputRef}
-              autoFocus
-              className="w-full flex-1 p-5 text-sm md:text-[15px] leading-relaxed text-gray-700 placeholder-gray-400 focus:outline-none resize-none min-h-[180px] bg-white border-0 focus:ring-0"
+            <RichTextInput
+              doc={inputDoc}
+              docVersion={inputDocVersion}
               placeholder={selectedLanguage.placeholder}
-              value={inputText}
-              onChange={handleTextChange}
-              maxLength={maxCharacters}
-              id="input-text-area"
+              maxCharacters={maxCharacters}
+              onChange={handleEditorChange}
             />
 
             {inputText.length === 0 && (
@@ -245,7 +251,8 @@ export default function HomePage() {
                       <DiffHighlight
                         segments={checkResult.segments}
                         language={selectedLanguage.name}
-                        onEffectiveTextChange={setEffectiveCorrected}
+                        rich={checkSource}
+                        onEffectiveChange={setEffectiveCorrected}
                       />
                     </div>
 
@@ -257,9 +264,7 @@ export default function HomePage() {
 
                       <div className="flex gap-2">
                         <button
-                          onClick={() =>
-                            handleCopyText(correctedText, "corrected")
-                          }
+                          onClick={copyCorrected}
                           className="text-[12.5px] flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white shadow-card hover:shadow-hover text-gray-700 hover:text-indigo-600 font-semibold transition"
                           title="Copy the corrected sentence"
                           id="copy-corrected-button"

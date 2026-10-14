@@ -40,6 +40,13 @@ test("each insertion that replaces text directly follows its deletion", () => {
   }
 });
 
+test("changes on different lines stay separate", () => {
+  const segs = buildSegments("first lien\nsecnd line", "first line\nsecond line");
+  const changes = segs.filter((s) => s.type !== "unmodified").map((s) => s.text);
+  assert.deepEqual(changes, ["lien", "line", "secnd", "second"]);
+  assert.ok(segs.some((s) => s.type === "unmodified" && s.text === "\n"));
+});
+
 test("reasons attach to the matching edit only", () => {
   const segs = buildSegments("He don't know and he have no plans.", "He doesn't know and he has no plans.", [
     { from: "don't", to: "doesn't", category: "Grammar", reason: "third person" },
